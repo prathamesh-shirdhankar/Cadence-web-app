@@ -1,6 +1,6 @@
 > Overwhelmed by a mountain of unwatched lectures, pending assignments, and impending deadlines?
 
-# Cadence 🚀
+# Cadence
 
 **Live Demo:** [https://cadence-web-app-chi.vercel.app/](https://cadence-web-app-chi.vercel.app/)
 
