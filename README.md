@@ -1,106 +1,83 @@
-# Cadence 📚⚡
+> Overwhelmed by a mountain of unwatched lectures, pending assignments, and impending deadlines?
 
-![React](https://img.shields.io/badge/React-18.x-blue?style=flat-square&logo=react)
-![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=flat-square&logo=tailwind-css)
-![Offline First](https://img.shields.io/badge/Offline-First-success?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)
+# Cadence 🚀
 
-**Cadence** is a high-performance, offline-first personal academic backlog and productivity tracker. Designed specifically to solve the "lecture accumulation" problem, Cadence utilizes a dynamic pacing algorithm to calculate exact daily study requirements, ensuring deadlines are met without burnout.
+**Live Demo:** [https://cadence-web-app-chi.vercel.app/](https://cadence-web-app-chi.vercel.app/)
 
-The application operates entirely within the client boundary, utilizing browser `localStorage` for persistent, zero-latency data access without the need for a backend or database.
+Cadence is a browser-based planner that helps students clear pending coursework by automatically calculating how much they need to study each day to hit their deadlines.
 
-## ✨ Core Features
+![React](https://img.shields.io/badge/React-18.x-blue?style=for-the-badge&logo=react)
+![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=for-the-badge&logo=vite)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css)
+![License](https://img.shields.io/badge/License-MIT-gray?style=for-the-badge)
 
-*   **Smart Daily Planner & Pace Engine:** An algorithmic engine that scans upcoming lecture deadlines, calculates the required daily study velocity, and automatically generates an optimized daily playlist to prevent overdue tasks.
-*   **Course Hierarchy:** Group isolated lectures into categorized courses, complete with progress tracking, visual color-coding, and granular URL/video source management.
-*   **Integrated Pomodoro Timer:** A native 25/5/15 minute focus timer utilizing the Web Audio API for non-blocking alerts. Completed sessions dynamically feed into the daily "Achieved Minutes" quota.
-*   **Split-View Calendar Agenda:** A paginated interactive monthly calendar featuring individual day-planning, markdown-style daily journaling, and aggregated daily workload views.
-*   **Revision & Retention Queue:** Built-in spaced-repetition workflows allowing users to manually flag completed lectures for review or add custom revision topics.
-*   **Advanced Analytics:** Real-time data visualization using `recharts`. Features a 7-day Target vs. Achieved bar chart and a predictive Area Chart forecasting the backlog clearance trajectory ("Freedom Day").
-*   **Zero-Backend Architecture:** 100% data privacy. All state is strictly localized. Includes a robust JSON Import/Export engine for reliable data backups.
+---
 
-## 🛠 Tech Stack
+## 📖 Project Overview
 
-*   **Core:** React.js, Vite
-*   **Styling:** Tailwind CSS (v3)
-*   **Animations:** Framer Motion (Spring physics, layout transitions)
-*   **Data Visualization:** Recharts
-*   **Icons:** Lucide-React (Consistent, scalable SVGs)
-*   **Persistence:** Custom React Hooks wrapping Native `window.localStorage`
+Modern students frequently face the "lecture accumulation" problem—falling behind on recorded classes and struggling to figure out how much they need to study daily to catch up. **Cadence** eliminates the guesswork. 
 
-## 🚀 Getting Started
+Built entirely on the client side using React and `localStorage`, the application boasts instant interactions, requires no backend server, and ensures that your academic data never leaves your device.
+
+---
+
+## ✨ Key Features
+
+* **Daily Workload Calculator:** Features a custom scheduling algorithm in JavaScript that takes pending tasks, their durations, and deadlines, and recalculates the required study time per day as tasks are completed or added.
+* **Fully Client-Side:** Built the entire app to run in the browser using React hooks and `localStorage` for data storage — no backend, no data leaves the user's device, and it works offline.
+* **Progress Charts:** Uses Recharts to show a 7-day chart comparing planned vs. actual study time, alongside an area chart projecting exactly when the backlog will be cleared based on the current pace.
+* **Structured Data Handling:** Manages complex, nested data relationships (Courses → Lectures → Status/Deadlines) seamlessly across multiple UI views.
+* **UX Polish:** Added smooth UI transitions with Framer Motion, a native Pomodoro focus timer using the Web Audio API, and a fully responsive layout built with Tailwind CSS.
+
+---
+
+## 💻 Installation Instructions
+
+Since Cadence is a zero-backend React application powered by Vite, getting it running locally takes less than a minute.
 
 ### Prerequisites
-Ensure you have [Node.js](https://nodejs.org/) (v18+ recommended) and `npm` installed.
+*   [Node.js](https://nodejs.org/) (v18 or higher recommended)
+*   npm or yarn
 
-### Installation
+### Local Development Setup
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/yourusername/cadence.git](https://github.com/yourusername/cadence.git)
-   cd cadence
+   git clone [https://github.com/prathamesh-shirdhankar/Cadence-web-app.git](https://github.com/prathamesh-shirdhankar/Cadence-web-app.git)
+   cd Cadence-web-app
 
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 npm install
 
 ```
 
 
-3. Start the development server:
+3. **Start the development server:**
 ```bash
 npm run dev
 
 ```
 
 
-4. Open your browser and navigate to `http://localhost:5173`
-
-## 🏗 Architecture & Engineering Notes
-
-* **State Management:** Built relying on a monolithic decoupled state approach using a custom `useLocalStorage` hook. This ensures React state and browser storage remain perfectly synchronized across render cycles.
-* **Failsafe Math:** All date manipulations and duration calculations are wrapped in a custom `safeNum()` utility and standardized `YYYY-MM-DD` serializers to prevent `NaN` crashes and timezone offset bugs.
-* **Dynamic Pacing Algorithm:** Found in `calculateRequiredPace()`, this engine evaluates $O(N)$ pending lectures, groups them by discrete deadlines, and calculates the floating maximum constraint to guarantee no deadline is breached based on the current date.
-
-## 📦 Desktop Packaging (Optional)
-
-Cadence can be compiled into a standalone `.exe` desktop application using Electron, providing a native OS experience.
-
-1. Ensure Electron builder is installed:
-```bash
-npm install -D electron electron-builder
-
-```
-
-
-2. Build the Vite project and package the application:
-```bash
-npm run electron:build
-
-```
-
-
-
-*The output executable will be located in the `/dist` directory.*
-
-## 🔒 Data Privacy
-
-Cadence is fundamentally designed around data sovereignty.
-
-* **No Telemetry:** There are no tracking scripts, analytics, or external API calls.
-* **Local Storage:** Your data never leaves your device.
-* **Backups:** It is highly recommended to use the **Settings > Backup & Restore (JSON)** feature frequently to prevent data loss in the event of browser cache clearance.
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+4. **Open your browser:** Navigate to `http://localhost:5173` to view the app.
 
 ---
 
-*Developed with a focus on code hygiene, fluid UX, and deep work productivity.*
+## 🚀 Usage Guide
+
+1. **Set Your Baseline:** Navigate to **Settings** and set your base daily study target (e.g., 120 minutes).
+2. **Populate Your Backlog:** Go to **Courses & Backlog**, create a course, and add pending lectures with their durations and strict deadlines.
+3. **Execute the Daily Plan:** Open your **Dashboard**. The planner will tell you exactly what you need to watch today. If your deadlines require a faster pace, the algorithm will safely override your baseline to keep you on track.
+4. **Engage Focus Mode:** Jump into the **Focus Timer**, start a 25-minute Pomodoro, and dive into a lecture. When the timer chimes, your focused time is automatically credited to your daily dashboard goal.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**. You are free to use, modify, and distribute this software. See the `LICENSE` file for more details.
 
 ```
 
