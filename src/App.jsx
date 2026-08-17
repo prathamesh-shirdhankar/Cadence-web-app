@@ -1109,7 +1109,7 @@ function CourseAccordion({
     deadline: "",
   });
 
-  // NEW: State for Editing Course
+  // State for Editing Course
   const [isEditingCourse, setIsEditingCourse] = useState(false);
   const [editCourseForm, setEditCourseForm] = useState({
     name: course.name,
@@ -1117,7 +1117,7 @@ function CourseAccordion({
     color: course.color,
   });
 
-  // NEW: State for Editing Lecture
+  // State for Editing Lecture
   const [editingLecId, setEditingLecId] = useState(null);
   const [editLecForm, setEditLecForm] = useState({
     title: "",
@@ -1172,7 +1172,6 @@ function CourseAccordion({
     setShowAddLec(false);
   };
 
-  // NEW: Save Edited Course
   const saveCourseEdit = (e) => {
     e.preventDefault();
     if (!editCourseForm.name.trim()) return;
@@ -1184,7 +1183,6 @@ function CourseAccordion({
     setIsEditingCourse(false);
   };
 
-  // NEW: Start Editing Lecture
   const startEditLec = (lec) => {
     setEditingLecId(lec.id);
     setEditLecForm({
@@ -1195,7 +1193,6 @@ function CourseAccordion({
     });
   };
 
-  // NEW: Save Edited Lecture
   const saveLecEdit = (e) => {
     e.preventDefault();
     if (!editLecForm.title.trim()) return;
@@ -1229,11 +1226,199 @@ function CourseAccordion({
     )
       setCourses(courses.filter((c) => c.id !== course.id));
   };
+
   const todayStr = formatDate(new Date());
+
+  // --- NEW: Filter lectures into Active and Completed ---
+  const activeLectures = course.lectures.filter(
+    (l) => l.status !== "completed" || l.needsRevision,
+  );
+  const completedLectures = course.lectures.filter(
+    (l) => l.status === "completed" && !l.needsRevision,
+  );
+
+  // --- NEW: Helper function to render a single lecture row ---
+  const renderLecture = (lec) => {
+    if (editingLecId === lec.id) {
+      return (
+        <div
+          key={lec.id}
+          className="p-3 sm:p-3.5 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 shadow-sm mx-2 sm:mx-3 my-1.5"
+        >
+          <form
+            onSubmit={saveLecEdit}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3"
+          >
+            <div className="sm:col-span-2 md:col-span-4 flex flex-col">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                Title
+              </label>
+              <input
+                type="text"
+                required
+                className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                value={editLecForm.title}
+                onChange={(e) =>
+                  setEditLecForm({ ...editLecForm, title: e.target.value })
+                }
+                autoFocus
+              />
+            </div>
+            <div className="md:col-span-2 flex flex-col">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                Mins
+              </label>
+              <input
+                type="number"
+                min="1"
+                className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                value={editLecForm.duration}
+                onChange={(e) =>
+                  setEditLecForm({ ...editLecForm, duration: e.target.value })
+                }
+              />
+            </div>
+            <div className="md:col-span-2 flex flex-col">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                Deadline
+              </label>
+              <input
+                type="date"
+                className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                value={editLecForm.deadline}
+                onChange={(e) =>
+                  setEditLecForm({ ...editLecForm, deadline: e.target.value })
+                }
+              />
+            </div>
+            <div className="sm:col-span-2 md:col-span-2 flex flex-col">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                URL (Opt)
+              </label>
+              <input
+                type="url"
+                className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                value={editLecForm.url}
+                onChange={(e) =>
+                  setEditLecForm({ ...editLecForm, url: e.target.value })
+                }
+              />
+            </div>
+            <div className="sm:col-span-2 md:col-span-2 flex gap-2 items-end">
+              <button
+                type="button"
+                onClick={() => setEditingLecId(null)}
+                className="h-[38px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg text-xs w-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-[38px] bg-indigo-600 text-white font-bold rounded-lg text-xs w-full hover:bg-indigo-700 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      );
+    }
+
+    const isOverdue =
+      lec.deadline && lec.deadline < todayStr && lec.status !== "completed";
+    return (
+      <div
+        key={lec.id}
+        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-white dark:bg-slate-900 rounded-xl border ${isOverdue ? "border-rose-300 dark:border-rose-800" : "border-slate-100 dark:border-slate-800/80"} shadow-sm mx-2 sm:mx-3 my-1.5 gap-3`}
+      >
+        <div className="flex items-start sm:items-center gap-3 overflow-hidden">
+          <div
+            className="w-2.5 h-2.5 rounded-full mt-1 sm:mt-0 shrink-0"
+            style={{ backgroundColor: course.color }}
+          />
+          <div className="overflow-hidden">
+            <h4
+              className={`font-bold text-sm text-slate-900 dark:text-white truncate ${lec.status === "completed" && !lec.needsRevision ? "line-through text-slate-400" : ""}`}
+            >
+              {lec.title}
+            </h4>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-medium text-slate-500 mt-0.5">
+              <span className="flex items-center gap-1 shrink-0">
+                <Clock size={12} /> {lec.duration}m
+              </span>
+              {lec.deadline && (
+                <span
+                  className={`flex items-center gap-1 shrink-0 ${isOverdue ? "text-rose-600 font-bold" : "text-indigo-500 font-bold"}`}
+                >
+                  <CalIcon size={12} /> {isOverdue ? "Overdue: " : "Deadline: "}{" "}
+                  {lec.deadline}
+                </span>
+              )}
+              {lec.needsRevision && (
+                <span className="flex items-center gap-1 text-amber-600 bg-amber-50 dark:bg-amber-950/50 px-2 rounded border border-amber-200 dark:border-amber-800/50 font-bold text-[10px] shrink-0">
+                  Needs Revision
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 self-end sm:self-auto shrink-0">
+          {lec.url && (
+            <a
+              href={lec.url}
+              target="_blank"
+              rel="noreferrer"
+              className="p-1.5 sm:p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition-colors"
+            >
+              <PlayCircle size={18} />
+            </a>
+          )}
+          <select
+            className={`appearance-none font-bold text-xs px-2 sm:px-3 py-1.5 rounded-lg border outline-none pr-6 sm:pr-7 bg-no-repeat bg-[right_0.4rem_center] bg-[length:0.8em_0.8em] cursor-pointer ${lec.needsRevision ? "bg-amber-50 text-amber-700 border-amber-200" : lec.status === "completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"}`}
+            style={{
+              backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
+            }}
+            value={lec.needsRevision ? "needs_revision" : lec.status}
+            onChange={(e) =>
+              updateLectureStatus(course.id, lec.id, e.target.value)
+            }
+          >
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="needs_revision">Needs Revision</option>
+          </select>
+          <button
+            onClick={() => startEditLec(lec)}
+            className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"
+            title="Edit Lecture"
+          >
+            <Edit3 size={14} />
+          </button>
+          <button
+            onClick={() =>
+              setCourses(
+                courses.map((c) =>
+                  c.id === course.id
+                    ? {
+                        ...c,
+                        lectures: c.lectures.filter((l) => l.id !== lec.id),
+                      }
+                    : c,
+                ),
+              )
+            }
+            className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+            title="Delete Lecture"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Card className="overflow-visible">
-      {/* CONDITIONAL RENDERING: Edit Course Form OR Normal Header */}
       {isEditingCourse ? (
         <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
           <form
@@ -1478,205 +1663,20 @@ function CourseAccordion({
                   No lectures added yet. Click "+ Add Lecture" above.
                 </p>
               )}
-              {course.lectures.map((lec) => {
-                // CONDITIONAL RENDERING: Edit Lecture Form OR Normal Row
-                if (editingLecId === lec.id) {
-                  return (
-                    <div
-                      key={lec.id}
-                      className="p-3 sm:p-3.5 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 shadow-sm mx-2 sm:mx-3 my-1.5"
-                    >
-                      <form
-                        onSubmit={saveLecEdit}
-                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3"
-                      >
-                        <div className="sm:col-span-2 md:col-span-4 flex flex-col">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
-                            Title
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
-                            value={editLecForm.title}
-                            onChange={(e) =>
-                              setEditLecForm({
-                                ...editLecForm,
-                                title: e.target.value,
-                              })
-                            }
-                            autoFocus
-                          />
-                        </div>
-                        <div className="md:col-span-2 flex flex-col">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
-                            Mins
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
-                            value={editLecForm.duration}
-                            onChange={(e) =>
-                              setEditLecForm({
-                                ...editLecForm,
-                                duration: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="md:col-span-2 flex flex-col">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
-                            Deadline
-                          </label>
-                          <input
-                            type="date"
-                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
-                            value={editLecForm.deadline}
-                            onChange={(e) =>
-                              setEditLecForm({
-                                ...editLecForm,
-                                deadline: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="sm:col-span-2 md:col-span-2 flex flex-col">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
-                            URL (Opt)
-                          </label>
-                          <input
-                            type="url"
-                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
-                            value={editLecForm.url}
-                            onChange={(e) =>
-                              setEditLecForm({
-                                ...editLecForm,
-                                url: e.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                        <div className="sm:col-span-2 md:col-span-2 flex gap-2 items-end">
-                          <button
-                            type="button"
-                            onClick={() => setEditingLecId(null)}
-                            className="h-[38px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg text-xs w-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            className="h-[38px] bg-indigo-600 text-white font-bold rounded-lg text-xs w-full hover:bg-indigo-700 transition-colors"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  );
-                }
 
-                // NORMAL LECTURE ROW
-                const isOverdue =
-                  lec.deadline &&
-                  lec.deadline < todayStr &&
-                  lec.status !== "completed";
-                return (
-                  <div
-                    key={lec.id}
-                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-3.5 bg-white dark:bg-slate-900 rounded-xl border ${isOverdue ? "border-rose-300 dark:border-rose-800" : "border-slate-100 dark:border-slate-800/80"} shadow-sm mx-2 sm:mx-3 my-1.5 gap-3`}
-                  >
-                    <div className="flex items-start sm:items-center gap-3 overflow-hidden">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full mt-1 sm:mt-0 shrink-0"
-                        style={{ backgroundColor: course.color }}
-                      />
-                      <div className="overflow-hidden">
-                        <h4
-                          className={`font-bold text-sm text-slate-900 dark:text-white truncate ${lec.status === "completed" && !lec.needsRevision ? "line-through text-slate-400" : ""}`}
-                        >
-                          {lec.title}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-medium text-slate-500 mt-0.5">
-                          <span className="flex items-center gap-1 shrink-0">
-                            <Clock size={12} /> {lec.duration}m
-                          </span>
-                          {lec.deadline && (
-                            <span
-                              className={`flex items-center gap-1 shrink-0 ${isOverdue ? "text-rose-600 font-bold" : "text-indigo-500 font-bold"}`}
-                            >
-                              <CalIcon size={12} />{" "}
-                              {isOverdue ? "Overdue: " : "Deadline: "}{" "}
-                              {lec.deadline}
-                            </span>
-                          )}
-                          {lec.needsRevision && (
-                            <span className="flex items-center gap-1 text-amber-600 bg-amber-50 dark:bg-amber-950/50 px-2 rounded border border-amber-200 dark:border-amber-800/50 font-bold text-[10px] shrink-0">
-                              Needs Revision
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-2 self-end sm:self-auto shrink-0">
-                      {lec.url && (
-                        <a
-                          href={lec.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 sm:p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950 rounded-lg transition-colors"
-                        >
-                          <PlayCircle size={18} />
-                        </a>
-                      )}
-                      <select
-                        className={`appearance-none font-bold text-xs px-2 sm:px-3 py-1.5 rounded-lg border outline-none pr-6 sm:pr-7 bg-no-repeat bg-[right_0.4rem_center] bg-[length:0.8em_0.8em] cursor-pointer ${lec.needsRevision ? "bg-amber-50 text-amber-700 border-amber-200" : lec.status === "completed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"}`}
-                        style={{
-                          backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
-                        }}
-                        value={
-                          lec.needsRevision ? "needs_revision" : lec.status
-                        }
-                        onChange={(e) =>
-                          updateLectureStatus(course.id, lec.id, e.target.value)
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
-                        <option value="needs_revision">Needs Revision</option>
-                      </select>
-                      <button
-                        onClick={() => startEditLec(lec)}
-                        className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"
-                        title="Edit Lecture"
-                      >
-                        <Edit3 size={14} />
-                      </button>
-                      <button
-                        onClick={() =>
-                          setCourses(
-                            courses.map((c) =>
-                              c.id === course.id
-                                ? {
-                                    ...c,
-                                    lectures: c.lectures.filter(
-                                      (l) => l.id !== lec.id,
-                                    ),
-                                  }
-                                : c,
-                            ),
-                          )
-                        }
-                        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
-                        title="Delete Lecture"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {/* --- RENDER ACTIVE LECTURES --- */}
+              {activeLectures.length > 0 &&
+                activeLectures.map((lec) => renderLecture(lec))}
+
+              {/* --- RENDER COMPLETED LECTURES --- */}
+              {completedLectures.length > 0 && (
+                <div className="pt-3 pb-1 px-3">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <CheckCircle2 size={12} /> Completed Work
+                  </h4>
+                </div>
+              )}
+              {completedLectures.map((lec) => renderLecture(lec))}
             </div>
           </motion.div>
         )}
@@ -1684,6 +1684,8 @@ function CourseAccordion({
     </Card>
   );
 }
+
+/**  end**/
 
 function RevisionView({
   courses,
