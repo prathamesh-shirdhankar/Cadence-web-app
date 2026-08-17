@@ -1109,6 +1109,23 @@ function CourseAccordion({
     deadline: "",
   });
 
+  // NEW: State for Editing Course
+  const [isEditingCourse, setIsEditingCourse] = useState(false);
+  const [editCourseForm, setEditCourseForm] = useState({
+    name: course.name,
+    subject: course.subject || "",
+    color: course.color,
+  });
+
+  // NEW: State for Editing Lecture
+  const [editingLecId, setEditingLecId] = useState(null);
+  const [editLecForm, setEditLecForm] = useState({
+    title: "",
+    duration: "",
+    url: "",
+    deadline: "",
+  });
+
   const pending = course.lectures.filter((l) => l.status === "pending");
   const totalCompleted = course.lectures.filter(
     (l) => l.status === "completed",
@@ -1155,6 +1172,55 @@ function CourseAccordion({
     setShowAddLec(false);
   };
 
+  // NEW: Save Edited Course
+  const saveCourseEdit = (e) => {
+    e.preventDefault();
+    if (!editCourseForm.name.trim()) return;
+    setCourses(
+      courses.map((c) =>
+        c.id === course.id ? { ...c, ...editCourseForm } : c,
+      ),
+    );
+    setIsEditingCourse(false);
+  };
+
+  // NEW: Start Editing Lecture
+  const startEditLec = (lec) => {
+    setEditingLecId(lec.id);
+    setEditLecForm({
+      title: lec.title,
+      duration: lec.duration,
+      url: lec.url || "",
+      deadline: lec.deadline || "",
+    });
+  };
+
+  // NEW: Save Edited Lecture
+  const saveLecEdit = (e) => {
+    e.preventDefault();
+    if (!editLecForm.title.trim()) return;
+    setCourses(
+      courses.map((c) =>
+        c.id === course.id
+          ? {
+              ...c,
+              lectures: c.lectures.map((l) =>
+                l.id === editingLecId
+                  ? {
+                      ...l,
+                      ...editLecForm,
+                      duration: safeNum(editLecForm.duration) || 30,
+                      deadline: editLecForm.deadline || null,
+                    }
+                  : l,
+              ),
+            }
+          : c,
+      ),
+    );
+    setEditingLecId(null);
+  };
+
   const deleteCourse = () => {
     if (
       confirm(
@@ -1167,66 +1233,155 @@ function CourseAccordion({
 
   return (
     <Card className="overflow-visible">
-      <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 gap-4">
-        <div className="flex items-center space-x-4 overflow-hidden">
-          <div
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm text-white flex-shrink-0"
-            style={{ backgroundColor: course.color }}
+      {/* CONDITIONAL RENDERING: Edit Course Form OR Normal Header */}
+      {isEditingCourse ? (
+        <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+          <form
+            onSubmit={saveCourseEdit}
+            className="flex flex-col md:flex-row gap-4 items-end"
           >
-            <BookOpen size={20} className="sm:w-6 sm:h-6" />
-          </div>
-          <div className="overflow-hidden">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <h2 className="text-lg sm:text-xl font-extrabold truncate">
-                {course.name}
-              </h2>
-              {course.subject && (
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase border border-slate-200 dark:border-slate-700 truncate max-w-full">
-                  {course.subject}
-                </span>
-              )}
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1 truncate">
-              {totalCompleted}/{total} cleared ({percent}%) • Target:{" "}
-              <span className="font-bold text-slate-700 dark:text-slate-300">
-                {projectedDate}
-              </span>
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3 self-end sm:self-auto">
-          <div className="w-20 sm:w-28 hidden md:flex items-center gap-3">
-            <span className="text-xs font-bold text-slate-500">{percent}%</span>
-            <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-              <div
-                className="h-2 rounded-full"
-                style={{ backgroundColor: course.color, width: `${percent}%` }}
+            <div className="flex-1 w-full">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                Course Name
+              </label>
+              <input
+                type="text"
+                required
+                className="w-full p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                value={editCourseForm.name}
+                onChange={(e) =>
+                  setEditCourseForm({ ...editCourseForm, name: e.target.value })
+                }
+                autoFocus
               />
             </div>
-          </div>
-          <button
-            onClick={() => setShowAddLec(!showAddLec)}
-            className="bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center transition-colors"
-          >
-            <Plus size={16} className="sm:mr-1" />
-            <span className="hidden sm:inline">Add Lecture</span>
-          </button>
-          <button
-            onClick={deleteCourse}
-            className="p-1.5 sm:p-2 text-slate-300 hover:text-red-500 transition-colors"
-            title="Delete Course"
-          >
-            <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
-          </button>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 transition-transform"
-            style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
-          >
-            <ChevronDown size={18} className="sm:w-5 sm:h-5" />
-          </button>
+            <div className="flex-1 w-full">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                Subject Tag
+              </label>
+              <input
+                type="text"
+                className="w-full p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                value={editCourseForm.subject}
+                onChange={(e) =>
+                  setEditCourseForm({
+                    ...editCourseForm,
+                    subject: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="w-full md:w-auto">
+              <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                Color Tag
+              </label>
+              <div className="flex space-x-2 h-10 items-center px-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                {COURSE_COLORS.map((c) => (
+                  <div
+                    key={c.value}
+                    onClick={() =>
+                      setEditCourseForm({ ...editCourseForm, color: c.value })
+                    }
+                    className={`w-5 h-5 rounded-full cursor-pointer transition-transform ${editCourseForm.color === c.value ? "scale-125 ring-2 ring-offset-2 ring-slate-400" : ""}`}
+                    style={{ backgroundColor: c.value }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => setIsEditingCourse(false)}
+                className="h-10 px-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg text-sm w-full md:w-auto hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="h-10 px-4 bg-indigo-600 text-white font-bold rounded-lg text-sm w-full md:w-auto hover:bg-indigo-700 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
+      ) : (
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 gap-4">
+          <div className="flex items-center space-x-4 overflow-hidden">
+            <div
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm text-white flex-shrink-0"
+              style={{ backgroundColor: course.color }}
+            >
+              <BookOpen size={20} className="sm:w-6 sm:h-6" />
+            </div>
+            <div className="overflow-hidden">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h2 className="text-lg sm:text-xl font-extrabold truncate">
+                  {course.name}
+                </h2>
+                {course.subject && (
+                  <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase border border-slate-200 dark:border-slate-700 truncate max-w-full">
+                    {course.subject}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1 truncate">
+                {totalCompleted}/{total} cleared ({percent}%) • Target:{" "}
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  {projectedDate}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 self-end sm:self-auto">
+            <div className="w-20 sm:w-28 hidden md:flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-500">
+                {percent}%
+              </span>
+              <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                <div
+                  className="h-2 rounded-full"
+                  style={{
+                    backgroundColor: course.color,
+                    width: `${percent}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAddLec(!showAddLec)}
+              className="bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg font-bold text-xs sm:text-sm flex items-center transition-colors"
+            >
+              <Plus size={16} className="sm:mr-1" />
+              <span className="hidden sm:inline">Add Lecture</span>
+            </button>
+            <button
+              onClick={() => setIsEditingCourse(true)}
+              className="p-1.5 sm:p-2 text-slate-300 hover:text-indigo-500 transition-colors"
+              title="Edit Course"
+            >
+              <Edit3 size={16} className="sm:w-[18px] sm:h-[18px]" />
+            </button>
+            <button
+              onClick={deleteCourse}
+              className="p-1.5 sm:p-2 text-slate-300 hover:text-red-500 transition-colors"
+              title="Delete Course"
+            >
+              <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
+            </button>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 transition-transform"
+              style={{
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              <ChevronDown size={18} className="sm:w-5 sm:h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <AnimatePresence>
         {showAddLec && (
           <motion.div
@@ -1324,6 +1479,105 @@ function CourseAccordion({
                 </p>
               )}
               {course.lectures.map((lec) => {
+                // CONDITIONAL RENDERING: Edit Lecture Form OR Normal Row
+                if (editingLecId === lec.id) {
+                  return (
+                    <div
+                      key={lec.id}
+                      className="p-3 sm:p-3.5 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl border border-indigo-200 dark:border-indigo-800 shadow-sm mx-2 sm:mx-3 my-1.5"
+                    >
+                      <form
+                        onSubmit={saveLecEdit}
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3"
+                      >
+                        <div className="sm:col-span-2 md:col-span-4 flex flex-col">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                            Title
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                            value={editLecForm.title}
+                            onChange={(e) =>
+                              setEditLecForm({
+                                ...editLecForm,
+                                title: e.target.value,
+                              })
+                            }
+                            autoFocus
+                          />
+                        </div>
+                        <div className="md:col-span-2 flex flex-col">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                            Mins
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                            value={editLecForm.duration}
+                            onChange={(e) =>
+                              setEditLecForm({
+                                ...editLecForm,
+                                duration: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="md:col-span-2 flex flex-col">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                            Deadline
+                          </label>
+                          <input
+                            type="date"
+                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                            value={editLecForm.deadline}
+                            onChange={(e) =>
+                              setEditLecForm({
+                                ...editLecForm,
+                                deadline: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="sm:col-span-2 md:col-span-2 flex flex-col">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase mb-1">
+                            URL (Opt)
+                          </label>
+                          <input
+                            type="url"
+                            className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-medium outline-none focus:border-indigo-500"
+                            value={editLecForm.url}
+                            onChange={(e) =>
+                              setEditLecForm({
+                                ...editLecForm,
+                                url: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="sm:col-span-2 md:col-span-2 flex gap-2 items-end">
+                          <button
+                            type="button"
+                            onClick={() => setEditingLecId(null)}
+                            className="h-[38px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-lg text-xs w-full hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="h-[38px] bg-indigo-600 text-white font-bold rounded-lg text-xs w-full hover:bg-indigo-700 transition-colors"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  );
+                }
+
+                // NORMAL LECTURE ROW
                 const isOverdue =
                   lec.deadline &&
                   lec.deadline < todayStr &&
@@ -1393,6 +1647,13 @@ function CourseAccordion({
                         <option value="needs_revision">Needs Revision</option>
                       </select>
                       <button
+                        onClick={() => startEditLec(lec)}
+                        className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"
+                        title="Edit Lecture"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                      <button
                         onClick={() =>
                           setCourses(
                             courses.map((c) =>
@@ -1408,6 +1669,7 @@ function CourseAccordion({
                           )
                         }
                         className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+                        title="Delete Lecture"
                       >
                         <X size={16} />
                       </button>
